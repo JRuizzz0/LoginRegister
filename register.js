@@ -48,7 +48,7 @@ btnEnviarL.addEventListener("click", (e) => {
     body: jsonEnvL
   })
     .then(res => res.json())
-    .then(data => console.log("Servidor dice:", data))
+    .then(data => console.log("Servidor:", data))
     .catch(err => console.error("Error en el envío:", err));
 });   
 
