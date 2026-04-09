@@ -21,8 +21,8 @@ public class Usuarios {
             // Itera por cada fila devuelta por la consulta.
             while (rs.next()) {
                 // Obtiene los datos de cada columna ("id" y "nombre") y los imprime por consola.
-                System.out.println(rs.getString("nombre" ) + rs.getString("apellido")
-                        + " - " + rs.getString("email") + " - " + rs.getInt("edad") + " - " + rs.getString("dni"));
+                System.out.println(rs.getString("nombre" )
+                        +  rs.getString("email") +  rs.getString("contraseña"));
             }
 
         } catch (Exception e) {
@@ -60,27 +60,24 @@ public class Usuarios {
         return found;
     }
 
-    public void insertarUsuario(String nombre , String apellido, String email, int edad, String dni) {
-        String sql = "INSERT INTO usuarios (nombre, apellido, email, edad, dni) VALUES (?, ?, ?, ?, ?)";
-        boolean found = findByName(nombre);
+    public void insertarUsuario(String nombre, String email, String contraseña) {
+        String sql = "INSERT INTO usuarios (nombre, email, contraseña) VALUES (?, ?, ?)";
+        boolean found = findByName(email);
         if (!found){
             try (Connection conn = ConnectionBBDD.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
 
 
                 stmt.setString(1, nombre);
-                stmt.setString(2, apellido);
-                stmt.setString(3, email);
-                stmt.setInt(4, edad);
-                stmt.setString(5, dni);
+                stmt.setString(2, email);
+                stmt.setString(3, contraseña);
+
                 stmt.executeUpdate();
 
 
                 System.out.println("Usuario insertado: " + nombre);
-                System.out.println("Usuario insertado: " + apellido);
                 System.out.println("Usuario insertado: " + email);
-                System.out.println("Usuario insertado: " + edad);
-                System.out.println("Usuario insertado: " + dni);
+                System.out.println("Usuario insertado: " + contraseña);
 
                 listarUsuarios();
 

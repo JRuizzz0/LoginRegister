@@ -1,10 +1,12 @@
 package controllers;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
+import org.example.Usuarios;
 import service.ServiceDogs;
 
 import javax.servlet.annotation.WebServlet;
@@ -26,6 +28,7 @@ public class DogsController {
     //Instancia HttpClient
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
+    Usuarios usuario = new Usuarios();
     /**
      * Metodo para manejar los endpoints
      * @param exchange encapsula la petición del cliente y la respuesta del servidor.
@@ -59,11 +62,9 @@ public class DogsController {
                 service.JsonPrintDosRazas(exchange);
             }
             if (path.startsWith("/dogs/register")) {
-
                 String method = exchange.getRequestMethod();
                 System.out.println("--- Nueva petición recibida ---");
                 System.out.println("Método: " + method);
-
 
                 if (method.equalsIgnoreCase("OPTIONS")) {
                     addCorsHeaders(exchange);
@@ -72,31 +73,33 @@ public class DogsController {
                     return;
                 }
 
-
                 if (method.equalsIgnoreCase("POST")) {
                     addCorsHeaders(exchange);
-
                     try {
-
                         byte[] bytes = exchange.getRequestBody().readAllBytes();
                         String body = new String(bytes, StandardCharsets.UTF_8);
                         System.out.println("Cuerpo recibido: " + body);
 
-
                         JsonObject raiz = JsonParser.parseString(body).getAsJsonObject();
-                        JsonArray resultado = new JsonArray();
-                        for (String usuario : raiz.keySet()) {
-                            String nombre = raiz.get(usuario).getAsJsonObject().get("nombre").getAsString();
-                            String email = raiz.get(usuario).getAsJsonObject().get("email").getAsString();
-                            String contraseña = raiz.get(usuario).getAsJsonObject().get("contraseña").getAsString();
-                            JsonObject obj = new JsonObject();
-                            obj.addProperty("nombre", nombre);
-                            obj.addProperty("email", email);
-                            obj.addProperty("contraseña", contraseña);
-                            resultado.add(obj);
-                        }
-                        sendResponse(exchange, 200, gson.toJson(resultado));
+                        System.out.println(raiz.toString());
 
+                        if (!raiz.has("nombre") || !raiz.has("email") || !raiz.has("contraseña")) {
+                            sendResponse(exchange, 400, "{\"error\":\"Faltan campos requeridos\"}");
+                            return;
+                        }
+
+                        String nombre = raiz.get("nombre").getAsString();
+                        String email = raiz.get("email").getAsString();
+                        String contraseña = raiz.get("contraseña").getAsString();
+                        String bcryptHashString = BCrypt.withDefaults().hashToString(12, contraseña.toCharArray());
+
+
+                        System.out.println("Datos: " + nombre + ", " + email + ", " + bcryptHashString);
+
+
+
+                        usuario.insertarUsuario(nombre,email, bcryptHashString);
+                        sendResponse(exchange, 200, gson.toJson(raiz));
 
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -105,10 +108,58 @@ public class DogsController {
                     return;
                 }
 
-
-                sendResponse(exchange, 405, "Método no permitido");
+                sendResponse(exchange, 405, "{\"error\":\"Método no permitido\"}");
             }
             if (path.startsWith("/dogs/login")) {
+
+                String method = exchange.getRequestMethod();
+                System.out.println("--- Nueva petición recibida ---");
+                System.out.println("Método: " + method);
+
+                if (method.equalsIgnoreCase("OPTIONS")) {
+                    addCorsHeaders(exchange);
+                    exchange.sendResponseHeaders(204, -1);
+                    exchange.getResponseBody().close();
+                    return;
+                }
+
+                if (method.equalsIgnoreCase("POST")) {
+                    addCorsHeaders(exchange);
+                    try {
+                        byte[] bytes = exchange.getRequestBody().readAllBytes();
+                        String body = new String(bytes, StandardCharsets.UTF_8);
+                        System.out.println("Cuerpo recibido: " + body);
+
+                        JsonObject raiz = JsonParser.parseString(body).getAsJsonObject();
+                        System.out.println(raiz.toString());
+
+                        if (!raiz.has("nombre") || !raiz.has("email") || !raiz.has("contraseña")) {
+                            sendResponse(exchange, 400, "{\"error\":\"Faltan campos requeridos\"}");
+                            return;
+                        }
+
+                        String nombre = raiz.get("nombre").getAsString();
+                        String email = raiz.get("email").getAsString();
+                        String contraseña = raiz.get("contraseña").getAsString();
+                        String bcryptHashString = BCrypt.withDefaults().hashToString(12, contraseña.toCharArray());
+                        BCrypt.Result result = BCrypt.verifyer().verify(contraseña.toCharArray(), bcryptHashString);
+
+
+
+                        System.out.println("Datos: " + nombre + ", " + email + ", " + result);
+
+
+
+                        sendResponse(exchange, 200, gson.toJson(raiz));
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        sendResponse(exchange, 500, "{\"error\":\"Error al procesar la solicitud\"}");
+                    }
+                    return;
+                }
+
+                sendResponse(exchange, 405, "{\"error\":\"Método no permitido\"}");
 
             }
 
