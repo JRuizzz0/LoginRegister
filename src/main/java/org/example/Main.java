@@ -20,6 +20,7 @@ public class Main {
                 System.out.println("Conexión correcta a PostgreSQL.");
                 Usuarios usuario = new Usuarios();
 
+
             System.out.println("Servidor iniciado en http://localhost:8080");
         }catch (Exception e){
             System.out.println("Error 503: Servidor no iniciado.");

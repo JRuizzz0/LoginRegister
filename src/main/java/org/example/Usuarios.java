@@ -33,27 +33,17 @@ public class Usuarios {
 
 
     public boolean findByName(String nombreBuscado) {
-        boolean found = true;
+        boolean found = false;
         String sql = "SELECT id, nombre FROM usuarios WHERE nombre = ?";
 
         try (Connection conn = ConnectionBBDD.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            // Sustituye el ? por el nombre que queremos buscar.
             stmt.setString(1, nombreBuscado);
-
-            // Ejecuta la consulta SELECT.
             ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                // Si existe al menos un usuario con ese nombre...
-                System.out.println("Ya existe un nombre en la Base de datos pon otro");
-            } else {
-                System.out.println("No existe ningún usuario con el nombre: " + nombreBuscado);
-                found = false;
-
+            if(rs.next()) {
+                System.out.println("Ya existe el email en la Base de datos pon otro");
+                found = true;
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }

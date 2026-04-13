@@ -29,8 +29,10 @@ public class DogsController {
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
     Usuarios usuario = new Usuarios();
+
     /**
      * Metodo para manejar los endpoints
+     *
      * @param exchange encapsula la petición del cliente y la respuesta del servidor.
      * @throws IOException error Input Output
      */
@@ -91,14 +93,21 @@ public class DogsController {
                         String nombre = raiz.get("nombre").getAsString();
                         String email = raiz.get("email").getAsString();
                         String contraseña = raiz.get("contraseña").getAsString();
-                        String bcryptHashString = BCrypt.withDefaults().hashToString(12, contraseña.toCharArray());
+                        String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!%@*?&])[A-Za-z\\d!%@*?&]{5,10}$";
+                        if ( contraseña.matches(regex)){
+                            System.out.println("Validación correcta");
+                            String bcryptHashString = BCrypt.withDefaults().hashToString(12, contraseña.toCharArray());
+                            System.out.println("Datos: " + nombre + ", " + email + ", " + bcryptHashString);
+                            usuario.insertarUsuario(nombre, email, bcryptHashString);
+                        }else {
+                            System.out.println("La contraseña debe incluir al menos una mayuscula, un caracter especial, un digito y estar entre 5 y 10 chars");
+                        }
 
 
-                        System.out.println("Datos: " + nombre + ", " + email + ", " + bcryptHashString);
 
 
 
-                        usuario.insertarUsuario(nombre,email, bcryptHashString);
+
                         sendResponse(exchange, 200, gson.toJson(raiz));
 
                     } catch (Exception e) {
@@ -138,16 +147,13 @@ public class DogsController {
                             return;
                         }
 
-                        String nombre = raiz.get("nombre").getAsString();
-                        String email = raiz.get("email").getAsString();
-                        String contraseña = raiz.get("contraseña").getAsString();
-                        String bcryptHashString = BCrypt.withDefaults().hashToString(12, contraseña.toCharArray());
-                        BCrypt.Result result = BCrypt.verifyer().verify(contraseña.toCharArray(), bcryptHashString);
+                        String nombreL = raiz.get("nombre").getAsString();
+                        String emailL = raiz.get("email").getAsString();
+                        String contraseñaL = raiz.get("contraseña").getAsString();
+                        String bcryptHashStringL = BCrypt.withDefaults().hashToString(12, contraseñaL.toCharArray());
 
 
-
-                        System.out.println("Datos: " + nombre + ", " + email + ", " + result);
-
+                        System.out.println("Datos: " + nombreL + ", " + emailL + ", " + bcryptHashStringL);
 
 
                         sendResponse(exchange, 200, gson.toJson(raiz));
@@ -161,9 +167,7 @@ public class DogsController {
 
                 sendResponse(exchange, 405, "{\"error\":\"Método no permitido\"}");
 
-            }
-
-            else {
+            } else {
                 service.sendResponse(exchange, 404, "Endpoint dogs no válido"); //error server not found
                 return;
             }
@@ -187,7 +191,7 @@ public class DogsController {
     /**
      * Envía una respuesta HTTP al cliente especificando que el contenido es de tipo JSON.
      *
-     * @param exchange  encapsula la petición del cliente y la respuesta del servidor.
+     * @param exchange encapsula la petición del cliente y la respuesta del servidor.
      * @param status   El código de estado HTTP que se enviará al cliente.
      * @param body     El cuerpo de la respuesta en formato de texto que será enviado.
      * @throws IOException Si ocurre un error de entrada/salida al configurar las cabeceras o al escribir en el flujo de respuesta.
@@ -200,10 +204,12 @@ public class DogsController {
         os.write(bytes);
         os.close();
     }
+
     public static void addCorsHeaders(HttpExchange exchange) {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
+
 
 }
